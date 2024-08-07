@@ -8,7 +8,7 @@ import logging
 TOKEN = os.environ.get("TOKEN")
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
-client = TelegramClient('session_name', API_ID, API_HASH).start(TOKEN=TOKEN)
+client = TelegramClient('in_memory_session_name', API_ID, API_HASH).start(bot_token=TOKEN)
 
 app = FastAPI()
 # Setup logging
