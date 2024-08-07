@@ -1,4 +1,4 @@
 fastapi==0.63.0
-python-telegram-bot
+python-telegram-bot==13.4
 pydantic
 requests
