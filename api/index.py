@@ -1,4 +1,4 @@
-import requests
+import httpx
 import os
 
 from time import time, sleep
@@ -54,9 +54,9 @@ def upload_to_filemoon(message):
         "key": "54845tb4kbkj7svvyig18",  # replace with your actual API key
         "url": message
     }
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    print("Response:", response.json())
+     
+    response = httpx.get(url, params=params)
+    print(response.json())
     if response.status_code == 200:
         print("Message uploaded successfully")
     else:
