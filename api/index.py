@@ -3,11 +3,12 @@ from typing import Optional
 
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
-
+import httpx
 from telegram import Update, Bot
 from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
 
 TOKEN = os.environ.get("TOKEN")
+FILEMOON_API_KEY = os.environ.get("FILEMOON_API_KEY")
 
 app = FastAPI()
 
@@ -38,12 +39,26 @@ def handle_video(update, context):
     file_path = new_file.file_path
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
 
+def handle_message(update, context):
+    message = update.message
+    if message.text:
+        # Upload text message to FileMoon API
+        url = f"https://filemoonapi.com/api/remote/add?key={FILEMOON_API_KEY}&url={message.text}"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            if response.status_code == 200:
+                context.bot.send_message(chat_id=update.effective_chat.id, text="File uploaded successfully!")
+            else:
+                context.bot.send_message(chat_id=update.effective_chat.id, text="Failed to upload file.")
+
 def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
+    message_handler = MessageHandler(Filters.text, handle_message)
     video_handler = MessageHandler(Filters.video, handle_video)
     dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(message_handler)
     dispatcher.add_handler(video_handler)
-
+    
 @app.post("/webhook")
 def webhook(webhook_data: TelegramWebhook):
     '''
