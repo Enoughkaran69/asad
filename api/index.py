@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from pyrogram import Client, filters
 from pyrogram.types import Update
+import logging
 
 TOKEN = os.environ.get("TOKEN")
 API_ID = os.environ.get("API_ID")
