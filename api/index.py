@@ -8,8 +8,11 @@ import logging
 TOKEN = os.environ.get("TOKEN")
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
-client = TelegramClient('in_memory_session_name', API_ID, API_HASH).start(bot_token=TOKEN)
 
+try:
+    client = TelegramClient('/tmp/session_name', API_ID, API_HASH).start(bot_token=TOKEN)
+except Exception as e:
+    print(f"Failed to initialize TelegramClient: {e}")
 app = FastAPI()
 # Setup logging
 logging.basicConfig(level=logging.INFO)
