@@ -4,15 +4,17 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from telethon import TelegramClient, events
 import logging
+import sqlite3
 
 TOKEN = os.environ.get("TOKEN")
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
 
-session_name = f'/tmp/session_{os.urandom(8).hex()}'
+conn = sqlite3.connect(':memory:')
+cursor = conn.cursor()
 
 try:
-    client = TelegramClient(session_name, API_ID, API_HASH).start(bot_token=TOKEN)
+    client = TelegramClient(conn, API_ID, API_HASH).start(bot_token=TOKEN)
     print("Client initialized successfully.")
 except Exception as e:
     print(f"Failed to initialize TelegramClient: {e}")
