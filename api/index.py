@@ -10,6 +10,9 @@ API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
 
 app = FastAPI()
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class TelegramWebhook(BaseModel):
     '''
@@ -38,15 +41,21 @@ async def webhook(webhook_data: TelegramWebhook):
     '''
     Telegram Webhook
     '''
+    logger.info(f"Received webhook data: {webhook_data}")
+
     update = Update.de_json(webhook_data.__dict__, client)
-    
-    if update.message and update.message.video:
-        video = update.message.video
-        file_id = video.file_id
-        file = await client.get_file(file_id)
-        file_path = file.file_path
-        await client.send_message(chat_id=update.message.chat.id, text=f"Video file path: {file_path}")
-    
+    if update.message:
+        if update.message.text == '/start':
+            logger.info("Received /start command")
+            await client.send_message(chat_id=update.message.chat.id, text="Hello!")
+        elif update.message.video:
+            video = update.message.video
+            file_id = video.file_id
+            file = await client.get_file(file_id)
+            file_path = file.file_path
+            logger.info(f"Sending video file path: {file_path}")
+            await client.send_message(chat_id=update.message.chat.id, text=f"Video file path: {file_path}")
+
     return {"message": "ok"}
 
 @app.get("/")
