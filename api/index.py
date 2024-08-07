@@ -2,7 +2,8 @@ import os
 from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
-from pyrogram import Client, Filters, Update
+from pyrogram import Client, Filters
+from pyrogram.types import Update
 
 TOKEN = os.environ.get("TOKEN")
 API_ID = os.environ.get("API_ID")
