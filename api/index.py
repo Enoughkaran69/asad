@@ -72,15 +72,26 @@ async def register_handlers(dispatcher):
     dispatcher.add_handler(message_handler)
 
 @app.post("/webhook")
-async def webhook(webhook_data: TelegramWebhook):
+def webhook(webhook_data: TelegramWebhook):
+    '''
+    Telegram Webhook
+    '''
+    # Method 1
     bot = Bot(token=TOKEN)
     update = Update.de_json(webhook_data.__dict__, bot) # convert the Telegram Webhook class to dictionary using __dict__ dunder method
     dispatcher = Dispatcher(bot, None, workers=4)
     register_handlers(dispatcher)
 
     # handle webhook request
-    await dispatcher.process_update(update)
+    dispatcher.process_update(update)
       
+
+    # Method 2
+    # you can just handle the webhook request here without using python-telegram-bot
+    # if webhook_data.message:
+    #     if webhook_data.message.text == '/start':
+    #         send_message(webhook_data.message.chat.id, 'Hello World')
+
     return {"message": "ok"}
 
 @app.get("/")
