@@ -55,10 +55,12 @@ async def handle_message_async(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Server response: {result}")
 
 def handle_video(update, context):
-    asyncio.create_task(handle_video_async(update, context))
+    loop = asyncio.get_event_loop()
+    asyncio.run_coroutine_threadsafe(handle_video_async(update, context), loop)
 
 def handle_message(update, context):
-    asyncio.create_task(handle_message_async(update, context))
+    loop = asyncio.get_event_loop()
+    asyncio.run_coroutine_threadsafe(handle_message_async(update, context), loop)
 
 def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
