@@ -33,28 +33,27 @@ class TelegramWebhook(BaseModel):
     poll_answer: Optional[dict]
 
 
-def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+async def start(update, context):
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
-def handle_video(update, context):
+async def handle_video(update, context):
     video = update.message.video
     file_id = video.file_id
-    new_file = context.bot.get_file(file_id)
+    new_file = await context.bot.get_file(file_id)
     file_path = new_file.file_path
-    context.bot.send_message(chat_id=update.effective_chat.id, text=f"{file_path}")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"{file_path}")
 
-def handle_message(update, context):
+async def handle_message(update, context):
     message_text = update.message.text
-    upload_to_filemoon(message_text)
+    await upload_to_filemoon(message_text)
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Message uploaded: {message_text}")
-
-def upload_to_filemoon(message):
+    
+async def upload_to_filemoon(message):
     url = "https://filemoonapi.com/api/remote/add"
     params = {
         "key": "54845tb4kbkj7svvyig18",  # replace with your actual API key
         "url": message
     }
-     
     async with httpx.AsyncClient() as client:
         response = await client.get(url, params=params)
     print(response.json())
@@ -63,7 +62,7 @@ def upload_to_filemoon(message):
     else:
         print("Failed to upload message")
 
-def register_handlers(dispatcher):
+async def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
     video_handler = MessageHandler(Filters.video, handle_video)
     message_handler = MessageHandler(Filters.text & ~Filters.command, handle_message)
@@ -72,17 +71,14 @@ def register_handlers(dispatcher):
     dispatcher.add_handler(message_handler)
 
 @app.post("/webhook")
-def webhook(webhook_data: TelegramWebhook):
-    '''
-    Telegram Webhook
-    '''
+async def webhook(webhook_data: TelegramWebhook):
     bot = Bot(token=TOKEN)
     update = Update.de_json(webhook_data.__dict__, bot) # convert the Telegram Webhook class to dictionary using __dict__ dunder method
     dispatcher = Dispatcher(bot, None, workers=4)
     register_handlers(dispatcher)
 
     # handle webhook request
-    dispatcher.process_update(update)
+    await dispatcher.process_update(update)
       
     return {"message": "ok"}
 
