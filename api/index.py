@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-
+import asyncio
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import httpx
@@ -32,19 +32,25 @@ class TelegramWebhook(BaseModel):
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
-def handle_video(update, context):
+async def upload_text_to_server(text):
+    url = "https://your-server-endpoint/upload"  # Replace with your server endpoint
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json={"text": text})
+        return response.json()
+
+async def handle_video(update, context):
     video = update.message.video
     file_id = video.file_id
     new_file = context.bot.get_file(file_id)
     file_path = new_file.file_path
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
 
-def handle_message(update, context):
+async def handle_message(update, context):
     message = update.message
     if message.text:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="File uploaded successfully!")
-        
-
+        # Upload the message text to the server
+        result = await upload_text_to_server(message.text)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Server response: {result}")
 
 def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
@@ -53,30 +59,23 @@ def register_handlers(dispatcher):
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(message_handler)
     dispatcher.add_handler(video_handler)
-    
+
 @app.post("/webhook")
-def webhook(webhook_data: TelegramWebhook):
+async def webhook(webhook_data: TelegramWebhook):
     '''
     Telegram Webhook
     '''
-    # Method 1
     bot = Bot(token=TOKEN)
     update = Update.de_json(webhook_data.__dict__, bot) # convert the Telegram Webhook class to dictionary using __dict__ dunder method
     dispatcher = Dispatcher(bot, None, workers=4)
     register_handlers(dispatcher)
 
     # handle webhook request
-    dispatcher.process_update(update)
-      
-
-    # Method 2
-    # you can just handle the webhook request here without using python-telegram-bot
-    # if webhook_data.message:
-    #     if webhook_data.message.text == '/start':
-    #         send_message(webhook_data.message.chat.id, 'Hello World')
+    asyncio.create_task(dispatcher.process_update(update))
 
     return {"message": "ok"}
 
 @app.get("/")
 def index():
     return {"message": "Hello World"}
+    
