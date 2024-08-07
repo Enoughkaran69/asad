@@ -39,7 +39,7 @@ def handle_video(update, context):
     file_path = new_file.file_path
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
 
-def handle_message(update, context):
+async def handle_message(update, context):
     message = update.message
     if message.text:
         # Upload text message to FileMoon API
@@ -50,6 +50,7 @@ def handle_message(update, context):
                 context.bot.send_message(chat_id=update.effective_chat.id, text="File uploaded successfully!")
             else:
                 context.bot.send_message(chat_id=update.effective_chat.id, text="Failed to upload file.")
+
 
 def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
