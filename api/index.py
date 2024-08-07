@@ -35,9 +35,9 @@ def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
 async def upload_text_to_server(text):
-    url = "https://your-server-endpoint/upload"  # Replace with your server endpoint
+    url = f"https://filemoonapi.com/api/remote/add?key={FILEMOON_API_KEY}&url={text}"
     async with httpx.AsyncClient() as client:
-        response = await client.post(url, json={"text": text})
+        response = await client.get(url)
         return response.json()
 
 async def handle_video_async(update, context):
@@ -55,12 +55,10 @@ async def handle_message_async(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Server response: {result}")
 
 def handle_video(update, context):
-    loop = asyncio.get_event_loop()
-    asyncio.run_coroutine_threadsafe(handle_video_async(update, context), loop)
+    asyncio.run(handle_video_async(update, context))
 
 def handle_message(update, context):
-    loop = asyncio.get_event_loop()
-    asyncio.run_coroutine_threadsafe(handle_message_async(update, context), loop)
+    asyncio.run(handle_message_async(update, context))
 
 def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
