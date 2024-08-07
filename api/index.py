@@ -55,7 +55,8 @@ def upload_to_filemoon(message):
         "url": message
     }
      
-    response = httpx.get(url, params=params)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, params=params)
     print(response.json())
     if response.status_code == 200:
         print("Message uploaded successfully")
