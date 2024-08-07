@@ -38,23 +38,29 @@ async def upload_text_to_server(text):
         response = await client.post(url, json={"text": text})
         return response.json()
 
-async def handle_video(update, context):
+async def handle_video_async(update, context):
     video = update.message.video
     file_id = video.file_id
     new_file = context.bot.get_file(file_id)
     file_path = new_file.file_path
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
 
-async def handle_message(update, context):
+async def handle_message_async(update, context):
     message = update.message
     if message.text:
         # Upload the message text to the server
         result = await upload_text_to_server(message.text)
         context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Server response: {result}")
 
+def handle_video(update, context):
+    asyncio.create_task(handle_video_async(update, context))
+
+def handle_message(update, context):
+    asyncio.create_task(handle_message_async(update, context))
+
 def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
-    message_handler = MessageHandler(Filters.text, handle_message)
+    message_handler = MessageHandler(Filters.text & ~Filters.command, handle_message)
     video_handler = MessageHandler(Filters.video, handle_video)
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(message_handler)
@@ -66,14 +72,15 @@ async def webhook(webhook_data: TelegramWebhook):
     Telegram Webhook
     '''
     bot = Bot(token=TOKEN)
-    update = Update.de_json(webhook_data.__dict__, bot) # convert the Telegram Webhook class to dictionary using __dict__ dunder method
+    update = Update.de_json(webhook_data.__dict__, bot)  # convert the Telegram Webhook class to dictionary using __dict__ dunder method
     dispatcher = Dispatcher(bot, None, workers=4)
     register_handlers(dispatcher)
 
     # handle webhook request
-    asyncio.create_task(dispatcher.process_update(update))
+    dispatcher.process_update(update)
 
     return {"message": "ok"}
+
 
 @app.get("/")
 def index():
