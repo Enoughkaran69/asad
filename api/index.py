@@ -30,6 +30,9 @@ class TelegramWebhook(BaseModel):
 
 client = Client("ja69du_bot", api_id=API_ID, api_hash=API_HASH, bot_token=TOKEN)
 
+async def handle_start(client, message):
+    await client.send_message(chat_id=message.chat.id, text="Hello!")
+
 @app.post("/webhook")
 async def webhook(webhook_data: TelegramWebhook):
     '''
