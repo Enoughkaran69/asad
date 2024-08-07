@@ -1,19 +1,14 @@
 import requests
 import os
-import logging
+
 from time import time, sleep
 from typing import Optional
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
 from telegram import Update, Bot
-from telegram.ext import Dispatcher, MessageHandler, filters, CommandHandler
+from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
 DOODSTREAM_API_KEY = '54845tb4kbkj7svvyig18'
 
 TOKEN = '7379831394:AAEwRFQBAGJmqQOdD3g0BxErJCE-8uktczw'
