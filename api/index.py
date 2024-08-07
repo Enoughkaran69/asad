@@ -2,18 +2,15 @@ import os
 from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+from telethon import TelegramClient, events
 import logging
 
 TOKEN = os.environ.get("TOKEN")
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
-
+client = TelegramClient('session_name', API_ID, API_HASH).start(TOKEN=TOKEN)
 
 app = FastAPI()
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,12 +34,13 @@ class TelegramWebhook(BaseModel):
 
 
 
-@dp.message_handler(content_types=types.ContentType.DOCUMENT)
-async def handle_document(message: types.Message):
-    file_id = message.document.file_id
-    file = await bot.get_file(file_id)
-    file_path = file.file_path
-    await message.reply(f"File path: {file_path}")
+@client.on(events.NewMessage)
+async def handler(event):
+    if event.message.file:
+        file_id = event.message.file.id
+        file = await client.get_messages(event.message.chat_id, ids=file_id)
+        file_path = file.file.name
+        await event.reply(f"File path: {file_path}")
 
 @app.post("/webhook")
 async def webhook(webhook_data: TelegramWebhook):
@@ -51,7 +49,7 @@ async def webhook(webhook_data: TelegramWebhook):
     '''
     logger.info(f"Received webhook data: {webhook_data}")
 
-    update = Update.de_json(webhook_data.__dict__, dp)
+    update = Update.de_json(webhook_data.__dict__, client)
     
     return {"message": "ok"}
 
@@ -59,5 +57,4 @@ async def webhook(webhook_data: TelegramWebhook):
 def index():
     return {"message": "Hello World"}
 
-if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+client.run_until_disconnected()
