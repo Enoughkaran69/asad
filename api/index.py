@@ -52,9 +52,8 @@ async def handle_message_async(update, context):
     if message.text:
         # Upload the message text to the server
         result = await upload_text_to_server(message.text)
-        context.bot.send_message(chat_id=update.effective_chat.id, text=f"{result}")
-        filecode = result['result']['filecode']
-        context.bot.send_message(chat_id=update.effective_chat.id, text=f"{filecode}")
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Server response: {result}")
+
 
 def handle_video(update, context):
     asyncio.run(handle_video_async(update, context))
