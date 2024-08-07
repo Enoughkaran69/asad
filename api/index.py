@@ -4,6 +4,7 @@ import asyncio
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import httpx
+from concurrent.futures import ThreadPoolExecutor
 from telegram import Update, Bot
 from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
 
@@ -11,6 +12,7 @@ TOKEN = os.environ.get("TOKEN")
 FILEMOON_API_KEY = os.environ.get("FILEMOON_API_KEY")
 
 app = FastAPI()
+executor = ThreadPoolExecutor()
 
 class TelegramWebhook(BaseModel):
     '''
@@ -76,8 +78,9 @@ async def webhook(webhook_data: TelegramWebhook):
     dispatcher = Dispatcher(bot, None, workers=4)
     register_handlers(dispatcher)
 
-    # handle webhook request
-    dispatcher.process_update(update)
+    # handle webhook request in a thread
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(executor, dispatcher.process_update, update)
 
     return {"message": "ok"}
 
