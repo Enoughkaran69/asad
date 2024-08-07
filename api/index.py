@@ -1,14 +1,22 @@
+import requests
 import os
-import httpx
+import logging
+from time import time, sleep
 from typing import Optional
-
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
 from telegram import Update, Bot
-from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
+from telegram.ext import Dispatcher, MessageHandler, filters, CommandHandler
 
-TOKEN = os.environ.get("TOKEN")
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+DOODSTREAM_API_KEY = '54845tb4kbkj7svvyig18'
+
+TOKEN = '7379831394:AAEwRFQBAGJmqQOdD3g0BxErJCE-8uktczw'
 
 app = FastAPI()
 
@@ -38,7 +46,7 @@ def handle_video(update, context):
     file_id = video.file_id
     new_file = context.bot.get_file(file_id)
     file_path = new_file.file_path
-    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"{file_path}")
 
 def handle_message(update, context):
     message_text = update.message.text
@@ -49,9 +57,11 @@ def upload_to_filemoon(message):
     url = "https://filemoonapi.com/api/remote/add"
     params = {
         "key": "54845tb4kbkj7svvyig18",  # replace with your actual API key
-        "url": message_text
+        "url": message
     }
-    response = httpx.get(url, params=params)
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    print("Response:", response.json())
     if response.status_code == 200:
         print("Message uploaded successfully")
     else:
