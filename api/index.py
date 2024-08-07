@@ -1,25 +1,16 @@
 import os
+import httpx
 from typing import Optional
-from fastapi import FastAPI
+
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
-from telethon import TelegramClient, events, sessions
-import logging
+
+from telegram import Update, Bot
+from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
 
 TOKEN = os.environ.get("TOKEN")
-API_ID = os.environ.get("API_ID")
-API_HASH = os.environ.get("API_HASH")
 
-session = sessions.StringSession()
-
-try:
-    client = TelegramClient(session, API_ID, API_HASH).start(bot_token=TOKEN)
-    print("Client initialized successfully.")
-except Exception as e:
-    print(f"Failed to initialize TelegramClient: {e}")
 app = FastAPI()
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class TelegramWebhook(BaseModel):
     '''
@@ -39,28 +30,56 @@ class TelegramWebhook(BaseModel):
     poll_answer: Optional[dict]
 
 
+def start(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
-@client.on(events.NewMessage)
-async def handler(event):
-    if event.message.file:
-        file_id = event.message.file.id
-        file = await client.get_messages(event.message.chat_id, ids=file_id)
-        file_path = file.file.name
-        await event.reply(f"File path: {file_path}")
+def handle_video(update, context):
+    video = update.message.video
+    file_id = video.file_id
+    new_file = context.bot.get_file(file_id)
+    file_path = new_file.file_path
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
+
+def handle_message(update, context):
+    message_text = update.message.text
+    upload_to_filemoon(message_text)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Message uploaded: {message_text}")
+
+def upload_to_filemoon(message):
+    url = "https://filemoonapi.com/api/remote/add"
+    params = {
+        "key": "54845tb4kbkj7svvyig18",  # replace with your actual API key
+        "url": message_text
+    }
+    response = httpx.get(url, params=params)
+    if response.status_code == 200:
+        print("Message uploaded successfully")
+    else:
+        print("Failed to upload message")
+
+def register_handlers(dispatcher):
+    start_handler = CommandHandler('start', start)
+    video_handler = MessageHandler(Filters.video, handle_video)
+    message_handler = MessageHandler(Filters.text & ~Filters.command, handle_message)
+    dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(video_handler)
+    dispatcher.add_handler(message_handler)
 
 @app.post("/webhook")
-async def webhook(webhook_data: TelegramWebhook):
+def webhook(webhook_data: TelegramWebhook):
     '''
     Telegram Webhook
     '''
-    logger.info(f"Received webhook data: {webhook_data}")
+    bot = Bot(token=TOKEN)
+    update = Update.de_json(webhook_data.__dict__, bot) # convert the Telegram Webhook class to dictionary using __dict__ dunder method
+    dispatcher = Dispatcher(bot, None, workers=4)
+    register_handlers(dispatcher)
 
-    update = Update.de_json(webhook_data.__dict__, client)
-    
+    # handle webhook request
+    dispatcher.process_update(update)
+      
     return {"message": "ok"}
 
 @app.get("/")
 def index():
     return {"message": "Hello World"}
-
-client.run_until_disconnected()
