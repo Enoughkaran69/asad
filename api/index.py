@@ -51,6 +51,7 @@ async def handle_message_async(update, context):
     message = update.message
     if message.text:
         # Upload the message text to the server
+        result = await upload_text_to_server(message.text)
         filecode = result['result']['filecode']
         context.bot.send_message(chat_id=update.effective_chat.id, text=f"{filecode}")
 
