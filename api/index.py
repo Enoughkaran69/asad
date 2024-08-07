@@ -1,17 +1,13 @@
-import httpx
 import os
-
-from time import time, sleep
 from typing import Optional
+
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
 from telegram import Update, Bot
 from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
 
-DOODSTREAM_API_KEY = '54845tb4kbkj7svvyig18'
-
-TOKEN = '7379831394:AAEwRFQBAGJmqQOdD3g0BxErJCE-8uktczw'
+TOKEN = os.environ.get("TOKEN")
 
 app = FastAPI()
 
@@ -32,43 +28,21 @@ class TelegramWebhook(BaseModel):
     poll: Optional[dict]
     poll_answer: Optional[dict]
 
+def start(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
-async def start(update, context):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
-
-async def handle_video(update, context):
+def handle_video(update, context):
     video = update.message.video
     file_id = video.file_id
-    new_file = await context.bot.get_file(file_id)
+    new_file = context.bot.get_file(file_id)
     file_path = new_file.file_path
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"{file_path}")
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Video file path: {file_path}")
 
-async def handle_message(update, context):
-    message_text = update.message.text
-    await upload_to_filemoon(message_text)
-    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Message uploaded: {message_text}")
-    
-async def upload_to_filemoon(message):
-    url = "https://filemoonapi.com/api/remote/add"
-    params = {
-        "key": "54845tb4kbkj7svvyig18",  # replace with your actual API key
-        "url": message
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-    print(response.json())
-    if response.status_code == 200:
-        print("Message uploaded successfully")
-    else:
-        print("Failed to upload message")
-
-async def register_handlers(dispatcher):
+def register_handlers(dispatcher):
     start_handler = CommandHandler('start', start)
     video_handler = MessageHandler(Filters.video, handle_video)
-    message_handler = MessageHandler(Filters.text & ~Filters.command, handle_message)
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(video_handler)
-    dispatcher.add_handler(message_handler)
 
 @app.post("/webhook")
 def webhook(webhook_data: TelegramWebhook):
