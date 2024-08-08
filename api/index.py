@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import httpx
 from concurrent.futures import ThreadPoolExecutor
-from telegram import Update, Bot
+from telegram import Update, Bot, File
 from telegram.ext import Dispatcher, MessageHandler, Filters, CommandHandler
 
 TOKEN = os.environ.get("TOKEN")
@@ -45,7 +45,11 @@ async def handle_video_async(update, context):
     file_id = video.file_id
     new_file = context.bot.get_file(file_id)
     file_path = new_file.file_path
-    context.bot.send_message(chat_id=update.effective_chat.id, text=f"{file_path}")
+    if new_file.file_size > 20 * 1024 * 1024:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f"big file")
+
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f"{file_path}")
 
 async def handle_message_async(update, context):
     message = update.message
