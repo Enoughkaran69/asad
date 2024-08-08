@@ -50,9 +50,13 @@ async def handle_video_async(update, context):
 async def handle_message_async(update, context):
     message = update.message
     if message.text:
-        # Upload the message text to the server
-        result = await upload_text_to_server(message.text)
-        context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Server response: {result}")
+        try:
+            # Upload the message text to the server
+            result = await upload_text_to_server(message.text)
+            filecode = result.get('result', {}).get('filecode', 'Unknown')
+            context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Filecode: {filecode}")
+        except Exception as e:
+            context.bot.send_message(chat_id=update.effective_chat.id, text=f"An error occurred: {str(e)}")
 
 
 def handle_video(update, context):
