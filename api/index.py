@@ -54,7 +54,7 @@ async def handle_message_async(update, context):
             # Upload the message text to the server
             result = await upload_text_to_server(message.text)
             filecode = result.get('result', {}).get('filecode', 'Unknown')
-            context.bot.send_message(chat_id=update.effective_chat.id, text=f"File uploaded successfully! Filecode: {filecode}")
+            context.bot.send_message(chat_id=update.effective_chat.id, text=f"{filecode}")
         except Exception as e:
             context.bot.send_message(chat_id=update.effective_chat.id, text=f"An error occurred: {str(e)}")
 
